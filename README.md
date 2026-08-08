@@ -13,6 +13,10 @@ Next.js (App Router) + Vercel + Supabase構成で、Claude Codeと一緒に開�
 雛形として空欄・プレースホルダー（`{{PROJECT_NAME}}`など）を含んでいるため、
 コピーしたあとにプロジェクトごとの内容を埋めて使います。
 
+Git/PR運用やワークフローのトリガー設計（`@claude`のOWNER限定起動、レビュー必須に
+しない方針など）は個人開発（一人開発）を前提にしています。詳細は
+`docs/git-workflow.md`・`docs/config-templates.md`を参照してください。
+
 ## 含まれるもの
 
 ```
@@ -20,8 +24,8 @@ Next.js (App Router) + Vercel + Supabase構成で、Claude Codeと一緒に開�
 ├── CLAUDE.md                          ← リポジトリ直下に配置。PROJECT_NAME等を書き換える
 ├── docs/
 │   ├── architecture.md                ← プロジェクトごとに内容を埋める
-│   ├── scope.md                       ← プロジェクトごとに内容を埋める
 │   ├── testing-strategy.md            ← 汎用。プロジェクト固有の項目だけ追記
+│   ├── scope.md                       ← プロジェクトごとに内容を埋める
 │   ├── git-workflow.md                ← 汎用。ドメイン名などプロジェクト固有部分だけ調整
 │   ├── config-templates.md            ← 汎用。.github/配下の設定ひな型の設計意図
 │   └── docs-sync-policy.md            ← 汎用。docsと実ファイルの整合性ルール
