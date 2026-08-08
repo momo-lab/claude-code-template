@@ -18,14 +18,23 @@ Next.js + Vercel + Supabase 構成のプロジェクトで、Claude Codeと一�
 │   ├── ISSUE_TEMPLATE/                ← bug_report.yml / feature_task.yml / config.yml
 │   ├── pull_request_template.md
 │   └── workflows/
-│       ├── ci.yml
-│       └── claude-code.yml            ← Issue/PRで@claudeメンションした時に起動
+│       ├── ci.yml.template            ← 利用開始時に`.yml`へリネームして有効化する
+│       └── claude-code.yml.template   ← 同上。Issue/PRで@claudeメンションした時に起動
 ```
+
+`.github/workflows/`配下の2ファイルは`.yml.template`という拡張子で管理している。
+GitHub Actionsはワークフローが置かれているリポジトリで発火するため、`.yml`のまま
+このテンプレートリポジトリに置いておくと、テンプレート自身を更新するPRでも
+`ci.yml`が起動してしまう（`package.json`もNext.js/Supabaseの実体もないため必ず
+失敗する）。それを避けるため無効化した状態で管理し、下記の手順1で`.yml`へ
+リネームして初めて有効化する。
 
 ## 新しいプロジェクトを始める時の手順
 
 1. このディレクトリの中身をコピーし、`CLAUDE.md`冒頭の`{{PROJECT_NAME}}`と
-   プロダクト概要（1〜3行）を書き換える
+   プロダクト概要（1〜3行）を書き換える。あわせて`.github/workflows/`配下の
+   `ci.yml.template` / `claude-code.yml.template`を、それぞれ`.template`を
+   取った`ci.yml` / `claude-code.yml`にリネームして有効化する
 2. `docs/architecture.md`のテンプレート項目（DB設計・権限モデル・スコープ）を埋める
    <!-- ここが一番重要。空のままだとClaudeが仕様を推測して実装してしまう -->
 3. GitHubリポジトリ作成、コミット。**Default branchを`develop`に変更**
