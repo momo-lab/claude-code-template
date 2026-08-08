@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  pull_request:
+    # feature/fix -> develop の日常PRと、develop -> main のリリースPR両方で発火させる
+    branches: [develop, main]
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  static-checks:
+    name: Lint / Typecheck / Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run build
+
+  integration-tests:
+    name: 統合テスト（ローカルSupabase）+ 型ドリフト検出
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - run: supabase start
+      - run: supabase db reset  # migrations適用 + seed投入
+      - name: Supabase型ドリフト検出
+        run: |
+          supabase gen types typescript --local > /tmp/generated.ts
+          diff -u src/types/database.ts /tmp/generated.ts || \
+            (echo "::error::DBスキーマとsrc/types/database.tsが乖離しています。'supabase gen types'を再実行してコミットしてください。" && exit 1)
+      - run: npm run test:unit
+      - run: npm run test:integration
+
+  # develop -> main のリリースPR時のみ実行（日常PRで毎回回すには重いため）
+  e2e-tests:
+    name: E2E（Playwright）
+    if: github.event.pull_request.base.ref == 'main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - run: supabase start
+      - run: supabase db reset
+      - run: npm run test:e2e

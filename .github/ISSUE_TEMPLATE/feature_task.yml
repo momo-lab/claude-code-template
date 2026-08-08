@@ -1,0 +1,25 @@
+name: 機能・タスク
+description: 新機能の追加や作業タスク
+labels: ["feature"]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: 何をしたいか
+      description: ゴールを1〜3行で
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: 詳細・実装方針（あれば）
+      description: 決まっていなければ空でよい。Claudeに実装を頼む場合はここに要件を書く
+    validations:
+      required: false
+  - type: checkboxes
+    id: claude
+    attributes:
+      label: Claudeへの直接依頼
+      options:
+        - label: このIssueは簡単な内容なので @claude で直接実装依頼する想定
+          required: false

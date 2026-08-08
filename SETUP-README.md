@@ -1,0 +1,74 @@
+# このテンプレートの使い方
+
+Next.js + Vercel + Supabase 構成のプロジェクトで、Claude Codeと一緒に開発する際の
+共通テンプレート。新しいプロジェクトを始めるたびに、このディレクトリの中身を
+リポジトリのルートにコピーして使う。
+
+```
+{project-root}/
+├── CLAUDE.md                          ← リポジトリ直下に配置。PROJECT_NAME等を書き換える
+├── docs/
+│   ├── architecture.md                ← プロジェクトごとに内容を埋める
+│   ├── scope.md                       ← プロジェクトごとに内容を埋める
+│   ├── testing-strategy.md            ← 汎用。プロジェクト固有の項目だけ追記
+│   ├── git-workflow.md                ← 汎用。ドメイン名などプロジェクト固有部分だけ調整
+│   ├── config-templates.md            ← 汎用。.github/配下の設定ひな型の設計意図
+│   └── docs-sync-policy.md            ← 汎用。docsと実ファイルの整合性ルール
+├── .github/
+│   ├── ISSUE_TEMPLATE/                ← bug_report.yml / feature_task.yml / config.yml
+│   ├── pull_request_template.md
+│   └── workflows/
+│       ├── ci.yml
+│       └── claude-code.yml            ← Issue/PRで@claudeメンションした時に起動
+```
+
+## 新しいプロジェクトを始める時の手順
+
+1. このディレクトリの中身をコピーし、`CLAUDE.md`冒頭の`{{PROJECT_NAME}}`と
+   プロダクト概要（1〜3行）を書き換える
+2. `docs/architecture.md`のテンプレート項目（DB設計・権限モデル・スコープ）を埋める
+   <!-- ここが一番重要。空のままだとClaudeが仕様を推測して実装してしまう -->
+3. GitHubリポジトリ作成、コミット。**Default branchを`develop`に変更**
+   （Settings > General > Default branch）
+4. Settings > General で「Automatically delete head branches」を有効化
+   （マージ後の作業ブランチを自動削除し、ブランチが溜まるのを防ぐ）
+5. `main` / `develop` にブランチ保護ルールを設定（PR必須・CI必須・直接push禁止）。
+   **ただし最初のうちは必須チェックを設定しない**こと。`package.json`のスクリプトや
+   `src/types/database.ts`が存在しないうちはCIが必ず失敗するため、最初の
+   スキャフォールドPRを1回通してから必須チェックを有効にする
+6. `package.json`に`lint` / `typecheck` / `build` / `test:unit` /
+   `test:integration` / `test:e2e` のスクリプトを定義
+   （Next.jsプロジェクト未初期化なら、Claude Codeに「CLAUDE.mdとdocs/を読んで
+   雛形をセットアップして」と頼めばスクリプトも含めて提案してくれる）
+7. `claude-code.yml`を使うので、リポジトリの Settings > Secrets に
+   `ANTHROPIC_API_KEY` を登録
+8. Vercelにリポジトリを接続。Production Branchを`main`に設定し、`develop`用の
+   固定URL（Hobby: ブランチ固定ドメイン / Pro: Custom Environment）を用意する
+9. Supabaseプロジェクトを作成し、`supabase init` → `supabase/migrations/`に
+   `docs/architecture.md`のテーブル定義を反映。本番用とdevelop検証用でDBを分離
+
+## Claude Codeへの最初の指示例
+
+> CLAUDE.md と docs/ 以下を読んで、このプロジェクトのNext.js + Supabase
+> プロジェクトの雛形をセットアップして。package.jsonのスクリプトは
+> .github/workflows/ci.yml が要求しているコマンド名（lint, typecheck,
+> build, test:unit, test:integration, test:e2e）に合わせて。
+
+## スマホから使う場合
+
+- 軽い修正・調査・PRレビュー依頼 → Claude Code on the web（claude.ai/code）
+  またはClaudeモバイルアプリから直接
+- ローカルのSupabase Docker環境が必要な作業の続きをスマホで見る/操作する
+  → PC側で `claude` を起動した状態で Remote Control を有効化し、
+  モバイルアプリの「Code」タブから接続
+- PCを開いていない時でも指示だけ出したい → GitHubのissue/PRコメントで
+  `@claude ◯◯して` とコメントすれば `claude-code.yml` 経由でクラウド上の
+  Claude Codeが動く（GitHubモバイルアプリからでもOK）。開いたPRはdevelopが
+  base branchになるので、developの固定URLで検証してからmainへ反映する
+
+## 使い回す上での注意
+
+- `CLAUDE.md`は200行程度を目安に収める。プロジェクト固有の詳細が増えてきたら
+  `docs/`に新しいファイルを足し、CLAUDE.mdからは1行で参照するだけにする
+- CLAUDE.mdにコーディング規約を書き足したくなったら、まずLinter/Formatterの
+  ルールにできないか検討する（Claudeへの指示より機械的な強制の方が確実で安い）

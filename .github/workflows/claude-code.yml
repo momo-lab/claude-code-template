@@ -1,0 +1,33 @@
+name: Claude Code
+
+on:
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+
+jobs:
+  claude:
+    # @claudeメンションかつ、コメント投稿者がリポジトリ所有者本人の場合のみ起動する。
+    # このチェックが無いと、public repoでは第三者のコメントでも
+    # contents:write権限のワークフローが起動してしまう（プロンプトインジェクション/
+    # APIコスト濫用のリスク）。個人開発なのでOWNERのみに限定している。
+    if: |
+      contains(github.event.comment.body, '@claude') &&
+      github.event.comment.author_association == 'OWNER'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          # 何も指定しない場合、リポジトリのデフォルトブランチ(develop)を起点に
+          # ブランチ作成・PR作成が行われる。mainへの直接変更は発生しない。
+          claude_args: "--max-turns 10"
