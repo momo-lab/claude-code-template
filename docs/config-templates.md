@@ -87,6 +87,10 @@ CLAUDE.mdにプロジェクト固有の詳細（DBスキーマ全部、テスト
   secret名（`SUPABASE_DB_URL_DEVELOP`/`SUPABASE_DB_URL_PROD`）を参照している
 - `supabase/migrations/**`に変更が無いpushでは走らせないよう`paths`フィルタを
   設定している
+- `concurrency`で同一ブランチへの連続マージ時に`supabase db push`が並行実行
+  されないようにしている。実行中の適用をキャンセルするとDBが中途半端な状態の
+  まま残るリスクがあるため、`cancel-in-progress: false`でキャンセルはせず
+  キューイングして順番に適用する設計にしている
 - 必須レビュアーによるブロックはしていない（`docs/git-workflow.md`の
   「ブランチ保護」と同じ理由。Privateリポジトリ+Freeプランではそもそも
   設定できないため、マージ済みのコード＝適用してよいという前提に立っている）
