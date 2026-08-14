@@ -36,11 +36,7 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - uses: supabase/setup-cli@v1
-        with:
-          version: latest
-      - run: supabase start
-      - run: supabase db reset  # migrations適用 + seed投入
+      - uses: ./.github/actions/setup-local-supabase
       - name: Supabase型ドリフト検出
         run: |
           supabase gen types typescript --local > /tmp/generated.ts
@@ -63,9 +59,5 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: npx playwright install --with-deps
-      - uses: supabase/setup-cli@v1
-        with:
-          version: latest
-      - run: supabase start
-      - run: supabase db reset
+      - uses: ./.github/actions/setup-local-supabase
       - run: pnpm test:e2e

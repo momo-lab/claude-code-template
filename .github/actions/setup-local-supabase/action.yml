@@ -1,0 +1,26 @@
+name: Setup local Supabase
+description: >
+  ローカルSupabase(Docker)を起動してmigrations適用+seed投入まで行い、接続情報を
+  環境変数にエクスポートする。integration-tests/e2e-testsの両ジョブから共通で
+  使うことで、接続情報の取得ステップが2箇所にコピーされて片方だけ更新漏れする
+  （drift）事故を防ぐ。
+
+runs:
+  using: composite
+  steps:
+    - uses: supabase/setup-cli@v1
+      with:
+        version: latest
+    - run: supabase start
+      shell: bash
+    - run: supabase db reset # migrations適用 + seed投入
+      shell: bash
+    - name: ローカルSupabaseの接続情報を環境変数にエクスポート
+      shell: bash
+      # 新しいSupabase CLIでは`supabase start`のたびにAPI_URL/ANON_KEY/
+      # SERVICE_ROLE_KEY/JWT_SECRET等が動的に発行され、固定の既知値
+      # （ドキュメントに載っているデフォルト値）とは限らない。
+      # 固定値をワークフロー側にハードコードせず、`supabase status -o env`から
+      # 都度取得する。出力はダブルクォート付きの`KEY="value"`形式なので、
+      # $GITHUB_ENVにそのまま追記できるよう引用符を取り除く
+      run: supabase status -o env | sed -E 's/^([A-Z_]+)="(.*)"$/\1=\2/' >> "$GITHUB_ENV"

@@ -32,6 +32,8 @@ Git/PR運用やワークフローのトリガー設計（`@claude`のOWNER限定
 └── .github/
     ├── ISSUE_TEMPLATE/                ← bug_report.yml / feature_task.yml / config.yml
     ├── pull_request_template.md
+    ├── actions/
+    │   └── setup-local-supabase/      ← ローカルSupabase起動+接続情報エクスポートの複合アクション
     └── workflows/
         ├── ci.yml.template            ← 利用開始時に`.yml`へリネームして有効化する
         └── claude-code.yml.template   ← 同上。Issue/PRで@claudeメンションした時に起動

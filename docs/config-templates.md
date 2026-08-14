@@ -35,6 +35,17 @@ CLAUDE.mdにプロジェクト固有の詳細（DBスキーマ全部、テスト
 - DB型ドリフト検出は独立ジョブにせず、`integration-tests`ジョブの1ステップとして
   統合している。別ジョブにすると`supabase start`（Docker起動）が重複してActionsの
   消費時間が増えるため、Supabaseを起動するジョブは極力まとめている
+- ローカルSupabaseの起動・migration適用・接続情報のエクスポートは
+  `.github/actions/setup-local-supabase`という複合アクション（composite action）
+  に切り出し、`integration-tests`と`e2e-tests`の両方から呼び出している。
+  以前は同じ内容を2ジョブにコピーしていたが、一方だけ更新して他方が古いままに
+  なる（drift）事故が起きた。特に`e2e-tests`はmain向けPR（リリースPR）でしか
+  発火しないため、setup手順の不整合はリリース時までCIで一度も検知されない
+  ブラインドスポットになりやすい。共通化はこの再発防止策
+- 接続情報（API_URL/ANON_KEY/SERVICE_ROLE_KEY/JWT_SECRET等）は固定の既知値を
+  ワークフローにハードコードせず、`supabase status -o env`から都度取得している。
+  Supabase CLIのバージョンによってはこれらの値が`supabase start`のたびに
+  動的発行されるため、固定値の決め打ちはCLIの更新でいつか壊れる
 - ブランチ運用そのもの（develop/mainの役割）は`docs/git-workflow.md`が正。
   このファイルはその運用を「機械的に強制する手段」という位置づけ
 
