@@ -131,3 +131,20 @@ required reviewers protection rule." のようなエラーで拒否される）�
 トリガーに`supabase db push --db-url`でmigrationを自動適用する。手動での
 push忘れによる「コードとDBスキーマの乖離」を防ぐための仕組み（設計判断の詳細は
 `docs/config-templates.md`参照）。
+
+## リリース手順
+
+`develop → main`のリリースPRをマージしたあとの手順。
+
+1. `main`へのマージ後、gitタグを作成する（`v1.0.0`のようなセマンティック
+   バージョニング形式）
+2. `gh release create <タグ> --generate-notes`でGitHub Releaseを作成する。
+   リリースノートはこのコマンドの自動生成（マージ済みPRの一覧から生成）に
+   任せ、CHANGELOG.mdは手動運用しない
+3. ロールバックが必要になった場合は、Firebase App Hostingのロールアウト履歴
+   から直前の正常なロールアウトに戻す。gitタグを戻す・リバートコミットを積む
+   といった手順は基本的に組まず、ホスティング側のロールバック機能に任せる
+
+**バージョンアップ（`package.json`の`version`を上げる）PR自体は、「すべての
+変更はIssue起点」ルールの例外として扱ってよい。** リリースという行為そのもの
+であり、機能追加・修正のような通常の変更ではないため。
