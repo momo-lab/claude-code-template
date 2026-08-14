@@ -34,6 +34,23 @@
   （CLAUDE.mdの「開発時の重要な決め事」と矛盾しないように）
 -->
 
+### Supabaseのデフォルト権限に関する注意
+
+<!-- プロジェクトで最初のmigrationを書く際に必ず確認すること -->
+
+**service_roleへのアクセス権**: 新しめのSupabase CLIでは、`public`スキーマに
+新規テーブルを作成しても`service_role`を含むData APIロールへのアクセス権が
+自動付与されない（`auto_expose_new_tables`の挙動変更）。Server Actionから
+`service_role`キーでテーブルにアクセスする設計の場合、最初のmigrationで
+明示的にGRANTしないと`permission denied for table ...`で失敗する。
+
+```sql
+-- 例: publicスキーマの全テーブルへservice_roleのフルアクセスを許可する
+grant usage on schema public to service_role;
+grant all on all tables in schema public to service_role;
+alter default privileges in schema public grant all on tables to service_role;
+```
+
 ## スコープ
 
 <!--
