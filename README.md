@@ -37,7 +37,8 @@ Git/PR運用やワークフローのトリガー設計（`@claude`のOWNER限定
     └── workflows/
         ├── ci.yml.template            ← 利用開始時に`.yml`へリネームして有効化する
         ├── claude-code.yml.template   ← 同上。Issue/PRで@claudeメンションした時に起動
-        └── db-migrate.yml.template    ← 同上。develop/mainへのマージ時にmigrationを自動適用
+        ├── db-migrate.yml.template    ← 同上。develop/mainへのマージ時にmigrationを自動適用
+        └── keep-alive.yml.template    ← 同上。Supabase無料枠プロジェクトのpause防止
 ```
 
 ## 注意: ワークフローが`.template`拡張子になっている理由
@@ -57,9 +58,11 @@ GitHub Actionsは、ワークフローファイルが**置かれているリポ�
 
 1. このディレクトリの中身をコピーし、`CLAUDE.md`冒頭の`{{PROJECT_NAME}}`と
    プロダクト概要（1〜3行）を書き換える。あわせて`.github/workflows/`配下の
-   `ci.yml.template` / `claude-code.yml.template` / `db-migrate.yml.template`を、
-   それぞれ`.template`を取った`ci.yml` / `claude-code.yml` / `db-migrate.yml`に
-   リネームして有効化する
+   `ci.yml.template` / `claude-code.yml.template` / `db-migrate.yml.template` /
+   `keep-alive.yml.template`を、それぞれ`.template`を取った`ci.yml` /
+   `claude-code.yml` / `db-migrate.yml` / `keep-alive.yml`にリネームして
+   有効化する（`keep-alive.yml`は中のURLをプロジェクトの本番/develop URLに
+   書き換えるまでは無効のままでよい）
 2. `docs/architecture.md`のテンプレート項目（DB設計・権限モデル・スコープ）を埋める
    <!-- ここが一番重要。空のままだとClaudeが仕様を推測して実装してしまう -->
 3. GitHubリポジトリ作成、コミット。**Default branchを`develop`に変更**

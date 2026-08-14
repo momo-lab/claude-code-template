@@ -121,6 +121,9 @@ required reviewers protection rule." のようなエラーで拒否される）�
    Secret Manager経由で`apphosting.yaml`に反映する（具体的にどの値が必要かは
    採用する権限モデルによる。例: `SUPABASE_URL`、`SUPABASE_ANON_KEY`、
    `SUPABASE_SERVICE_ROLE_KEY`など。`docs/architecture.md`の「権限モデル」参照）
+4. Supabase無料プランは一定期間アクセスが無いとプロジェクトがpauseされる。
+   `.github/workflows/keep-alive.yml`を有効化し、本番/develop両方のURLを
+   登録しておく（設計意図は`docs/config-templates.md`参照）
 
 ## マイグレーションの自動デプロイ
 
