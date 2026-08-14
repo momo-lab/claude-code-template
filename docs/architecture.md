@@ -51,6 +51,21 @@ grant all on all tables in schema public to service_role;
 alter default privileges in schema public grant all on tables to service_role;
 ```
 
+**anon/authenticatedへの不要なGRANT**: 「RLSを有効化してポリシーを定義しない
+＝拒否」という設計は、GRANTレベルで`anon`/`authenticated`ロールに標準権限が
+残っていると実質的に不完全になる。ローカルDocker環境だけで開発していると
+気づきにくく、`supabase db diff --linked`で実プロジェクトとの差分を取って
+初めて発覚しやすい落とし穴。RLS deny-by-defaultを採用する場合は、以下のように
+明示的にREVOKEしておく（`alter default privileges`まで設定しておくと、以後
+追加するテーブルにも自動的に適用される）。
+
+```sql
+-- 例: anon/authenticatedからpublicスキーマの標準権限を剥奪する
+revoke all on all tables in schema public from anon, authenticated;
+alter default privileges in schema public
+  revoke all on tables from anon, authenticated;
+```
+
 ## スコープ
 
 <!--
