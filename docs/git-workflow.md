@@ -7,9 +7,10 @@
 
 ## ブランチ構成
 
-- `main`: 本番。Vercel Production Branch。直接pushしない。PRのみで更新する
-- `develop`: **リポジトリのデフォルトブランチ**。開発/検証用。Vercelの固定URL
-  （開発系環境）に自動デプロイされる
+- `main`: 本番。Firebase App Hostingの本番用backend（live branch = `main`）。
+  直接pushしない。PRのみで更新する
+- `develop`: **リポジトリのデフォルトブランチ**。開発/検証用。Firebase App Hosting
+  のdevelop用backend（live branch = `develop`）に自動デプロイされる
 - `feature/{issue番号}-slug` / `fix/{issue番号}-slug`: 通常の作業ブランチ。
   `develop`から切り、`develop`へPRを出す
 - `hotfix/{issue番号}-slug`: 本番で今すぐ直したい緊急修正のみ、例外的に`main`から切る
@@ -24,10 +25,11 @@ Claude Code GitHub Actionが開くPRも、何も指定しなければデフォ�
 2. Issue画面から「Create a branch」で`develop`ベースの作業ブランチを作成
 3. 実装 → `develop`向けにPRを作成。本文に`Closes #<issue番号>`を必ず書く
    （マージ時にIssueが自動クローズされる）
-4. PRで`.github/workflows/ci.yml`が走る。VercelがPreviewデプロイし、PRにURLが
-   コメントされる（PR単体の動作確認用）
-5. `develop`にマージ → Vercelの開発系環境（固定URL）に反映される。
-   **ここで実際に触って手動検証する**
+4. PRで`.github/workflows/ci.yml`が走る。Firebase App HostingのGitHub連携で
+   PRごとのプレビュー用ロールアウトが自動生成され、PRにURLがコメントされる
+   （PR単体の動作確認用。Firebase Console側でPRプレビューの発行を有効にしておく）
+5. `develop`にマージ → develop用backendのlive branchが更新され、develop固定URLに
+   反映される。**ここで実際に触って手動検証する**
 6. 検証OKなものがある程度溜まったら、`develop → main`のリリースPRを作成してマージ
    → 本番デプロイ
 
@@ -36,7 +38,7 @@ Claude Code GitHub Actionが開くPRも、何も指定しなければデフォ�
 1. Issueに `@claude ◯◯して` とコメントする（GitHub Web/モバイルアプリどちらでも可）
 2. `.github/workflows/claude-code.yml`が起動し、デフォルトブランチ(`develop`)を
    起点にブランチを作成してPRを自動で開く
-3. PRのVercel Preview、またはマージ後のdevelop固定URLで人間が検証する
+3. PRのプレビューロールアウト、またはマージ後のdevelop固定URLで人間が検証する
 4. 問題なければ通常フロー同様、develop→mainのリリースPRでまとめて本番反映する
 
 Claudeが開いたPRであっても、mainへの直接マージは行わない。必ずdevelopを経由させる。
@@ -63,21 +65,86 @@ Claudeが開いたPRであっても、mainへの直接マージは行わない�
 
 ## ブランチ保護（GitHubリポジトリ設定・手動）
 
-- `main`: PR必須 / CIのstatic-checksとintegration-testsを必須チェックに設定 /
-  直接push禁止
-- `develop`: 同上（個人開発でも統一した方がミスが減る）
-- リポジトリのDefault branchは`develop`に設定する
+**注意**: 必須レビュー・必須ステータスチェックなどのブランチ保護ルールは、
+Privateリポジトリでは**GitHub Pro以上のプランが必要**な機能。個人開発で
+Privateリポジトリ+Freeプランを使っている場合、GitHub側でこれらを強制することは
+できない（設定しようとすると "Please ensure the billing plan supports the
+required reviewers protection rule." のようなエラーで拒否される）。
+
+- **Free/Privateの場合（デフォルト）**: GitHub側の強制設定はせず、以下を
+  **規約として守る**運用にする
+  - `main`/`develop`へは直接pushしない。必ずPR経由で更新する
+  - CIが通っていないPRはマージしない（下記「PRの書き方」参照）
+  - リポジトリのDefault branchは`develop`に設定する
+- **Pro以上のプランを使っている場合**: 上記に加えて実際にGitHub側でも強制できる
+  - `main`: PR必須 / CIのstatic-checksとintegration-testsを必須チェックに設定 /
+    直接push禁止
+  - `develop`: 同上（個人開発でも統一した方がミスが減る）
+  - **ただし最初のうちは必須チェックを設定しない**こと。`package.json`の
+    スクリプトや`src/types/database.ts`が存在しないうちはCIが必ず失敗するため、
+    最初のスキャフォールドPRを1回通してから必須チェックを有効にする
 
 `.github/workflows/ci.yml`は`develop`向けPRと`main`向けPR（リリースPR）の両方で
 発火する。E2Eだけは重いので`main`向けPR（リリースPR）の時だけ実行される。
 
-## Vercel設定
+## Firebase App Hostingセットアップ
 
-- Production Branch = `main`
-- `develop`ブランチに固定ドメイン（例: `dev.example.com`）を割り当てる
-  - Hobbyプラン: Preview環境の中で`develop`ブランチに固定ドメインを割り当てる
-    方式で代替する
-  - Proプラン以上: Custom Environmentとして`staging`を作成し、`develop`への
-    branch trackingを設定すると、専用の環境変数・専用ドメインを綺麗に分離できる
+- Firebaseプロジェクト内にApp Hostingのbackendを**本番用/develop検証用の2つ**
+  作成し、それぞれのlive branchを`main`/`develop`に設定する（backendごとに
+  `*.web.app`等の固定ドメインが発行される。独自ドメインを使う場合もbackendごとに
+  個別に割り当てる）
+- 環境変数・シークレットは`apphosting.yaml`（backendごとに
+  `apphosting.<branch>.yaml`で分離可能）とSecret Manager経由で管理する。
+  Vercelのようなダッシュボード上の平文環境変数ではなく、
+  `firebase apphosting:secrets:set`でSecret Managerに登録し、`apphosting.yaml`の
+  `env`欄で参照する
 - 本番とdevelop検証環境ではSupabaseプロジェクト（または最低限DB/スキーマ）を
   分離し、手動検証で本番データを汚さないようにする
+
+## Supabaseプロジェクトのセットアップ
+
+本番用/develop検証用のSupabaseプロジェクトを新規作成・作り直しする際の手順。
+
+1. ダッシュボードでプロジェクトを作成する。**DBパスワードは記号を含まない
+   英数字にする**（`supabase db push --db-url`に渡す接続文字列に記号入りだと
+   URLパースエラーになりやすいため）
+2. migrationを適用する
+   - 通常は`SUPABASE_DB_URL_DEVELOP`/`SUPABASE_DB_URL_PROD`をリポジトリ
+     secretsに設定しておけば、`develop`/`main`へのマージ（push）時に
+     `.github/workflows/db-migrate.yml`が自動適用する（下記
+     「マイグレーションの自動デプロイ」参照）
+   - 手元で先に確認したい場合は
+     `supabase db push --dry-run --db-url <Session poolerの接続文字列>`
+     （副作用無しで内容を確認できる。`--dry-run`を外せば実際に適用される）
+3. Firebase App Hostingの対応する環境（develop/production backend）に接続情報を
+   設定する。値はSupabaseダッシュボードの Project Settings → API から取得し、
+   Secret Manager経由で`apphosting.yaml`に反映する（具体的にどの値が必要かは
+   採用する権限モデルによる。例: `SUPABASE_URL`、`SUPABASE_ANON_KEY`、
+   `SUPABASE_SERVICE_ROLE_KEY`など。`docs/architecture.md`の「権限モデル」参照）
+4. Supabase無料プランは一定期間アクセスが無いとプロジェクトがpauseされる。
+   `.github/workflows/keep-alive.yml`を有効化し、本番/develop両方のURLを
+   登録しておく（設計意図は`docs/config-templates.md`参照）
+
+## マイグレーションの自動デプロイ
+
+`.github/workflows/db-migrate.yml`が、`develop`/`main`へのpush（＝PRマージ）を
+トリガーに`supabase db push --db-url`でmigrationを自動適用する。手動での
+push忘れによる「コードとDBスキーマの乖離」を防ぐための仕組み（設計判断の詳細は
+`docs/config-templates.md`参照）。
+
+## リリース手順
+
+`develop → main`のリリースPRをマージしたあとの手順。
+
+1. `main`へのマージ後、gitタグを作成する（`v1.0.0`のようなセマンティック
+   バージョニング形式）
+2. `gh release create <タグ> --generate-notes`でGitHub Releaseを作成する。
+   リリースノートはこのコマンドの自動生成（マージ済みPRの一覧から生成）に
+   任せ、CHANGELOG.mdは手動運用しない
+3. ロールバックが必要になった場合は、Firebase App Hostingのロールアウト履歴
+   から直前の正常なロールアウトに戻す。gitタグを戻す・リバートコミットを積む
+   といった手順は基本的に組まず、ホスティング側のロールバック機能に任せる
+
+**バージョンアップ（`package.json`の`version`を上げる）PR自体は、「すべての
+変更はIssue起点」ルールの例外として扱ってよい。** リリースという行為そのもの
+であり、機能追加・修正のような通常の変更ではないため。

@@ -8,5 +8,5 @@ Closes #
 
 ## 動作確認
 
-- [ ] developブランチのVercel環境（または本PRのPreview）で実際に動作確認した
+- [ ] developブランチのFirebase App Hosting環境（または本PRのプレビューロールアウト）で実際に動作確認した
 - [ ] 確認した内容:

@@ -1,0 +1,24 @@
+name: Keep Supabase project alive
+
+# Supabaseの無料枠プロジェクトは一定期間アクセスが無いとpauseされる。
+# 本番/develop検証用アプリのヘルスチェックエンドポイントに定期的にアクセスし、
+# Supabaseへのアクセスを発生させることでpauseを防ぐ。
+# `/api/health`側はSupabaseに対して軽いクエリを実行してから200を返す実装にすること
+# （アプリのURLに疎通するだけではSupabaseへのアクセスは発生しない）。
+
+on:
+  schedule:
+    - cron: "0 0 */3 * *" # 3日おき。無料枠pauseの猶予期間より十分短ければよい
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        url:
+          # 本番/develop検証用、両方のSupabaseプロジェクトをpauseから守るため両方叩く
+          - https://example.com/api/health # 本番URLに書き換える
+          - https://dev.example.com/api/health # develop固定URLに書き換える
+    steps:
+      - run: curl -fsS "${{ matrix.url }}"

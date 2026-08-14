@@ -15,37 +15,35 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: npm
-      - run: npm ci
-      - run: npm run lint
-      - run: npm run typecheck
-      - run: npm run build
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm build
 
   integration-tests:
     name: 統合テスト（ローカルSupabase）+ 型ドリフト検出
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: npm
-      - run: npm ci
-      - uses: supabase/setup-cli@v1
-        with:
-          version: latest
-      - run: supabase start
-      - run: supabase db reset  # migrations適用 + seed投入
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: ./.github/actions/setup-local-supabase
       - name: Supabase型ドリフト検出
         run: |
           supabase gen types typescript --local > /tmp/generated.ts
           diff -u src/types/database.ts /tmp/generated.ts || \
             (echo "::error::DBスキーマとsrc/types/database.tsが乖離しています。'supabase gen types'を再実行してコミットしてください。" && exit 1)
-      - run: npm run test:unit
-      - run: npm run test:integration
+      - run: pnpm test:unit
+      - run: pnpm test:integration
 
   # develop -> main のリリースPR時のみ実行（日常PRで毎回回すには重いため）
   e2e-tests:
@@ -54,15 +52,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: npm
-      - run: npm ci
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
       - run: npx playwright install --with-deps
-      - uses: supabase/setup-cli@v1
-        with:
-          version: latest
-      - run: supabase start
-      - run: supabase db reset
-      - run: npm run test:e2e
+      - uses: ./.github/actions/setup-local-supabase
+      - run: pnpm test:e2e

@@ -39,6 +39,23 @@ DBアクセスを含む関数、Server Action、API Routeはユニットテス�
   ことで、テスト間の状態汚染を防ぐ
 - 実行順に依存するテストを書かない
 
+**注意（Vitestのファイル並列実行）**: 単一の共有ローカルDBに対してtruncate
+ベースでリセットする上記の方式は、Vitestのデフォルトのファイル並列実行と
+相性が悪い。複数のテストファイルが並列実行されると、あるファイルの`truncate`が
+別のファイルが実行中のデータを消してしまい、外部キー制約違反などで間欠的に
+失敗する（再現性が低く原因調査に時間がかかりやすい）。統合テスト用のVitest設定
+では`fileParallelism: false`を設定し、テストファイルを直列実行すること。
+
+```ts
+// vitest.integration.config.ts
+export default defineConfig({
+  test: {
+    fileParallelism: false, // 共有DBをtruncateでリセットするため直列実行必須
+    // ...
+  },
+});
+```
+
 ### 3. E2E（少数精鋭・Playwright）
 
 ブラウザを実際に操作して確認する価値がある、コアなユーザージャーニーのみを数本。

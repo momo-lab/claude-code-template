@@ -1,6 +1,6 @@
 # claude-code-template
 
-Next.js (App Router) + Vercel + Supabase構成で、Claude Codeと一緒に開発する
+Next.js (App Router) + Firebase App Hosting + Supabase構成で、Claude Codeと一緒に開発する
 プロジェクト用の共通テンプレートです。新しいプロジェクトを始めるたびに、
 このリポジトリの中身をプロジェクトルートにコピーして使います。
 
@@ -32,9 +32,13 @@ Git/PR運用やワークフローのトリガー設計（`@claude`のOWNER限定
 └── .github/
     ├── ISSUE_TEMPLATE/                ← bug_report.yml / feature_task.yml / config.yml
     ├── pull_request_template.md
+    ├── actions/
+    │   └── setup-local-supabase/      ← ローカルSupabase起動+接続情報エクスポートの複合アクション
     └── workflows/
         ├── ci.yml.template            ← 利用開始時に`.yml`へリネームして有効化する
-        └── claude-code.yml.template   ← 同上。Issue/PRで@claudeメンションした時に起動
+        ├── claude-code.yml.template   ← 同上。Issue/PRで@claudeメンションした時に起動
+        ├── db-migrate.yml.template    ← 同上。develop/mainへのマージ時にmigrationを自動適用
+        └── keep-alive.yml.template    ← 同上。Supabase無料枠プロジェクトのpause防止
 ```
 
 ## 注意: ワークフローが`.template`拡張子になっている理由
@@ -43,7 +47,7 @@ GitHub Actionsは、ワークフローファイルが**置かれているリポ�
 `ci.yml` / `claude-code.yml`をそのままの拡張子でこのテンプレートリポジトリに
 置いておくと、テンプレート自身を更新するPRやコメントでも動いてしまいます。
 特に`ci.yml`は`package.json`やNext.js/Supabaseの実体を前提にしているため、
-このリポジトリ自体を更新するPRでは`npm ci`などが必ず失敗します。
+このリポジトリ自体を更新するPRでは`pnpm install`などが必ず失敗します。
 
 これを避けるため、このリポジトリでは`ci.yml.template` / `claude-code.yml.template`
 という名前で無効化した状態で管理しています。プロジェクトにコピーしたあと、
@@ -54,16 +58,22 @@ GitHub Actionsは、ワークフローファイルが**置かれているリポ�
 
 1. このディレクトリの中身をコピーし、`CLAUDE.md`冒頭の`{{PROJECT_NAME}}`と
    プロダクト概要（1〜3行）を書き換える。あわせて`.github/workflows/`配下の
-   `ci.yml.template` / `claude-code.yml.template`を、それぞれ`.template`を
-   取った`ci.yml` / `claude-code.yml`にリネームして有効化する
+   `ci.yml.template` / `claude-code.yml.template` / `db-migrate.yml.template` /
+   `keep-alive.yml.template`を、それぞれ`.template`を取った`ci.yml` /
+   `claude-code.yml` / `db-migrate.yml` / `keep-alive.yml`にリネームして
+   有効化する（`keep-alive.yml`は中のURLをプロジェクトの本番/develop URLに
+   書き換えるまでは無効のままでよい）
 2. `docs/architecture.md`のテンプレート項目（DB設計・権限モデル・スコープ）を埋める
    <!-- ここが一番重要。空のままだとClaudeが仕様を推測して実装してしまう -->
 3. GitHubリポジトリ作成、コミット。**Default branchを`develop`に変更**
    （Settings > General > Default branch）
 4. Settings > General で「Automatically delete head branches」を有効化
    （マージ後の作業ブランチを自動削除し、ブランチが溜まるのを防ぐ）
-5. `main` / `develop` にブランチ保護ルールを設定（PR必須・CI必須・直接push禁止）。
-   **ただし最初のうちは必須チェックを設定しない**こと。`package.json`のスクリプトや
+5. `main` / `develop` にブランチ保護ルールを設定する。**Privateリポジトリでは
+   必須レビュー等の保護ルールはGitHub Pro以上が必要**なため、Freeプランの場合は
+   GitHub側で強制せず「直接pushしない」を規約として守る運用にする（詳細は
+   `docs/git-workflow.md`の「ブランチ保護」参照）。Pro以上で実際に設定する場合も、
+   **最初のうちは必須チェックを設定しない**こと。`package.json`のスクリプトや
    `src/types/database.ts`が存在しないうちはCIが必ず失敗するため、最初の
    スキャフォールドPRを1回通してから必須チェックを有効にする
 6. `package.json`に`lint` / `typecheck` / `build` / `test:unit` /
@@ -72,10 +82,14 @@ GitHub Actionsは、ワークフローファイルが**置かれているリポ�
    雛形をセットアップして」と頼めばスクリプトも含めて提案してくれる）
 7. `claude-code.yml`を使うので、リポジトリの Settings > Secrets に
    `ANTHROPIC_API_KEY` を登録
-8. Vercelにリポジトリを接続。Production Branchを`main`に設定し、`develop`用の
-   固定URL（Hobby: ブランチ固定ドメイン / Pro: Custom Environment）を用意する
+8. Firebaseプロジェクトを作成し、App Hostingでリポジトリと連携する。
+   本番用/develop検証用で別々のbackendを作成し、それぞれのlive branchを
+   `main`/`develop`に設定する（backendごとに固定ドメインが発行される）
 9. Supabaseプロジェクトを作成し、`supabase init` → `supabase/migrations/`に
-   `docs/architecture.md`のテーブル定義を反映。本番用とdevelop検証用でDBを分離
+   `docs/architecture.md`のテーブル定義を反映。本番用とdevelop検証用でDBを分離。
+   `db-migrate.yml`用に`SUPABASE_DB_URL_DEVELOP` / `SUPABASE_DB_URL_PROD`を
+   リポジトリsecretsに設定する（詳細は`docs/git-workflow.md`の
+   「Supabaseプロジェクトのセットアップ」参照）
 
 ## Claude Codeへの最初の指示例
 
