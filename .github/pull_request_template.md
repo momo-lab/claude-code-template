@@ -1,6 +1,8 @@
 ## 概要
 
-Closes #
+Refs #
+<!-- Closes/Fixes等のクローズキーワードは使わない。developでの手動検証前に
+     Issueが自動クローズされてしまうため（docs/git-workflow.mdの「通常フロー」参照） -->
 
 ## 変更内容
 

@@ -23,13 +23,15 @@ Claude Code GitHub Actionが開くPRも、何も指定しなければデフォ�
 
 1. Issue作成（`.github/ISSUE_TEMPLATE/`のテンプレートを使う）
 2. Issue画面から「Create a branch」で`develop`ベースの作業ブランチを作成
-3. 実装 → `develop`向けにPRを作成。本文に`Closes #<issue番号>`を必ず書く
-   （マージ時にIssueが自動クローズされる）
+3. 実装 → `develop`向けにPRを作成。本文に`Refs #<issue番号>`のようにIssue番号を
+   明記する（`Closes`/`Fixes`等のクローズキーワードは使わない。マージ時点では
+   まだdevelopでの手動検証が済んでいないため、Issueは自動クローズさせない）
 4. PRで`.github/workflows/ci.yml`が走る。Firebase App HostingのGitHub連携で
    PRごとのプレビュー用ロールアウトが自動生成され、PRにURLがコメントされる
    （PR単体の動作確認用。Firebase Console側でPRプレビューの発行を有効にしておく）
 5. `develop`にマージ → develop用backendのlive branchが更新され、develop固定URLに
-   反映される。**ここで実際に触って手動検証する**
+   反映される。**ここで実際に触って手動検証し、問題なければ対応するIssueを
+   手動でクローズする**
 6. 検証OKなものがある程度溜まったら、`develop → main`のリリースPRを作成してマージ
    → 本番デプロイ
 
@@ -38,7 +40,10 @@ Claude Code GitHub Actionが開くPRも、何も指定しなければデフォ�
 1. Issueに `@claude ◯◯して` とコメントする（GitHub Web/モバイルアプリどちらでも可）
 2. `.github/workflows/claude-code.yml`が起動し、デフォルトブランチ(`develop`)を
    起点にブランチを作成してPRを自動で開く
-3. PRのプレビューロールアウト、またはマージ後のdevelop固定URLで人間が検証する
+3. PRのプレビューロールアウト、またはマージ後のdevelop固定URLで人間が検証する。
+   問題なければ対応するIssueを手動でクローズする（Claude Codeが開くPRの本文も
+   クローズキーワードを使わない書き方になるよう、Issueコメントで依頼する際に
+   伝える。「PRの書き方」参照）
 4. 問題なければ通常フロー同様、develop→mainのリリースPRでまとめて本番反映する
 
 Claudeが開いたPRであっても、mainへの直接マージは行わない。必ずdevelopを経由させる。
@@ -54,11 +59,16 @@ Claudeが開いたPRであっても、mainへの直接マージは行わない�
    `git checkout -b sync/main-to-develop main && git push` してから
    `develop`向けPRを作る）
 
+hotfixは`develop`での検証待ちという中間状態を挟まず、マージ＝即本番反映
+であるため、通常フローと異なり`Closes #<issue番号>`を使ってよい（マージと
+同時にIssueをクローズして問題ない）。
+
 ## PRの書き方
 
 - タイトルは `feat: ...` / `fix: ...` / `chore: ...` 程度のprefixで揃える
   （厳密なConventional Commits運用はしない。可読性のためだけ）
-- 本文には最低限 `Closes #<issue番号>` と、動作確認方法（develop環境のURLで
+- 本文には最低限 `Refs #<issue番号>`（`Closes`/`Fixes`等のクローズキーワードは
+  使わない。理由は「通常フロー」参照）と、動作確認方法（develop環境のURLで
   何を確認したか）を書く
 - レビュー必須のルールは設けない（個人開発のため）。ただしCIが通っていない
   PRはマージしない
@@ -87,50 +97,10 @@ required reviewers protection rule." のようなエラーで拒否される）�
 `.github/workflows/ci.yml`は`develop`向けPRと`main`向けPR（リリースPR）の両方で
 発火する。E2Eだけは重いので`main`向けPR（リリースPR）の時だけ実行される。
 
-## Firebase App Hostingセットアップ
+## デプロイ先・インフラ関連
 
-- Firebaseプロジェクト内にApp Hostingのbackendを**本番用/develop検証用の2つ**
-  作成し、それぞれのlive branchを`main`/`develop`に設定する（backendごとに
-  `*.web.app`等の固定ドメインが発行される。独自ドメインを使う場合もbackendごとに
-  個別に割り当てる）
-- 環境変数・シークレットは`apphosting.yaml`（backendごとに
-  `apphosting.<branch>.yaml`で分離可能）とSecret Manager経由で管理する。
-  Vercelのようなダッシュボード上の平文環境変数ではなく、
-  `firebase apphosting:secrets:set`でSecret Managerに登録し、`apphosting.yaml`の
-  `env`欄で参照する
-- 本番とdevelop検証環境ではSupabaseプロジェクト（または最低限DB/スキーマ）を
-  分離し、手動検証で本番データを汚さないようにする
-
-## Supabaseプロジェクトのセットアップ
-
-本番用/develop検証用のSupabaseプロジェクトを新規作成・作り直しする際の手順。
-
-1. ダッシュボードでプロジェクトを作成する。**DBパスワードは記号を含まない
-   英数字にする**（`supabase db push --db-url`に渡す接続文字列に記号入りだと
-   URLパースエラーになりやすいため）
-2. migrationを適用する
-   - 通常は`SUPABASE_DB_URL_DEVELOP`/`SUPABASE_DB_URL_PROD`をリポジトリ
-     secretsに設定しておけば、`develop`/`main`へのマージ（push）時に
-     `.github/workflows/db-migrate.yml`が自動適用する（下記
-     「マイグレーションの自動デプロイ」参照）
-   - 手元で先に確認したい場合は
-     `supabase db push --dry-run --db-url <Session poolerの接続文字列>`
-     （副作用無しで内容を確認できる。`--dry-run`を外せば実際に適用される）
-3. Firebase App Hostingの対応する環境（develop/production backend）に接続情報を
-   設定する。値はSupabaseダッシュボードの Project Settings → API から取得し、
-   Secret Manager経由で`apphosting.yaml`に反映する（具体的にどの値が必要かは
-   採用する権限モデルによる。例: `SUPABASE_URL`、`SUPABASE_ANON_KEY`、
-   `SUPABASE_SERVICE_ROLE_KEY`など。`docs/architecture.md`の「権限モデル」参照）
-4. Supabase無料プランは一定期間アクセスが無いとプロジェクトがpauseされる。
-   `.github/workflows/keep-alive.yml`を有効化し、本番/develop両方のURLを
-   登録しておく（設計意図は`docs/config-templates.md`参照）
-
-## マイグレーションの自動デプロイ
-
-`.github/workflows/db-migrate.yml`が、`develop`/`main`へのpush（＝PRマージ）を
-トリガーに`supabase db push --db-url`でmigrationを自動適用する。手動での
-push忘れによる「コードとDBスキーマの乖離」を防ぐための仕組み（設計判断の詳細は
-`docs/config-templates.md`参照）。
+Firebase App Hostingのセットアップ、Supabaseプロジェクトのセットアップ、
+マイグレーションの自動デプロイについては`docs/deployment.md`を参照。
 
 ## リリース手順
 

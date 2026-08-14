@@ -6,6 +6,12 @@ on:
     paths:
       - "supabase/migrations/**"
 
+concurrency:
+  group: db-migrate-${{ github.ref }}
+  # 実行中のmigration適用をキャンセルするとDBが中途半端な状態のまま残る
+  # リスクがあるため、キャンセルはせずキューイングして順番に適用する
+  cancel-in-progress: false
+
 jobs:
   # develop/mainで接続先DBのsecretを切り替える必要があるが、ジョブ内でsecret名を
   # 動的に組み立てることはGitHub Actions単体では綺麗に書けないため、2ジョブに分けている
