@@ -59,11 +59,11 @@ GitHub Actionsは、ワークフローファイルが**置かれているリポ�
 
 1. このディレクトリの中身をコピーし、`CLAUDE.md`冒頭の`{{PROJECT_NAME}}`と
    プロダクト概要（1〜3行）を書き換える。あわせて`.github/workflows/`配下の
-   `ci.yml.template` / `claude-code.yml.template` / `db-migrate.yml.template` /
-   `keep-alive.yml.template`を、それぞれ`.template`を取った`ci.yml` /
-   `claude-code.yml` / `db-migrate.yml` / `keep-alive.yml`にリネームして
-   有効化する（`keep-alive.yml`は中のURLをプロジェクトの本番/develop URLに
-   書き換えるまでは無効のままでよい）
+   `ci.yml.template` / `claude-code.yml.template` / `db-migrate.yml.template`を、
+   それぞれ`.template`を取った`ci.yml` / `claude-code.yml` / `db-migrate.yml`に
+   リネームして有効化する。**`keep-alive.yml.template`はまだリネームしない**
+   （`.yml`にリネームした時点でcronトリガーが有効になり、プレースホルダーURLへの
+   アクセスが失敗し続けてしまう。本番/develop URLが決まる手順9で改めて案内する）
 2. `docs/architecture.md`のテンプレート項目（DB設計・権限モデル・スコープ）を埋める
    <!-- ここが一番重要。空のままだとClaudeが仕様を推測して実装してしまう -->
 3. GitHubリポジトリ作成、コミット。**Default branchを`develop`に変更**
@@ -85,7 +85,9 @@ GitHub Actionsは、ワークフローファイルが**置かれているリポ�
    `ANTHROPIC_API_KEY` を登録
 8. Firebaseプロジェクトを作成し、App Hostingでリポジトリと連携する。
    本番用/develop検証用で別々のbackendを作成し、それぞれのlive branchを
-   `main`/`develop`に設定する（backendごとに固定ドメインが発行される）
+   `main`/`develop`に設定する（backendごとに固定ドメインが発行される）。
+   本番/develop URLが決まったら、`.github/workflows/keep-alive.yml.template`
+   内のURLを書き換えたうえで`keep-alive.yml`にリネームして有効化する
 9. Supabaseプロジェクトを作成し、`supabase init` → `supabase/migrations/`に
    `docs/architecture.md`のテーブル定義を反映。本番用とdevelop検証用でDBを分離。
    `db-migrate.yml`用に`SUPABASE_DB_URL_DEVELOP` / `SUPABASE_DB_URL_PROD`を
