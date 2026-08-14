@@ -26,7 +26,8 @@ Git/PR運用やワークフローのトリガー設計（`@claude`のOWNER限定
 │   ├── architecture.md                ← プロジェクトごとに内容を埋める
 │   ├── testing-strategy.md            ← 汎用。プロジェクト固有の項目だけ追記
 │   ├── scope.md                       ← プロジェクトごとに内容を埋める
-│   ├── git-workflow.md                ← 汎用。ドメイン名などプロジェクト固有部分だけ調整
+│   ├── git-workflow.md                ← 汎用。Git/Issue/PR運用・リリース手順
+│   ├── deployment.md                  ← 汎用。デプロイ先・Supabaseプロジェクトのセットアップ
 │   ├── config-templates.md            ← 汎用。.github/配下の設定ひな型の設計意図
 │   └── docs-sync-policy.md            ← 汎用。docsと実ファイルの整合性ルール
 └── .github/
@@ -88,7 +89,7 @@ GitHub Actionsは、ワークフローファイルが**置かれているリポ�
 9. Supabaseプロジェクトを作成し、`supabase init` → `supabase/migrations/`に
    `docs/architecture.md`のテーブル定義を反映。本番用とdevelop検証用でDBを分離。
    `db-migrate.yml`用に`SUPABASE_DB_URL_DEVELOP` / `SUPABASE_DB_URL_PROD`を
-   リポジトリsecretsに設定する（詳細は`docs/git-workflow.md`の
+   リポジトリsecretsに設定する（詳細は`docs/deployment.md`の
    「Supabaseプロジェクトのセットアップ」参照）
 
 ## Claude Codeへの最初の指示例

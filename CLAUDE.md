@@ -47,6 +47,8 @@ docs/                 # 詳細ドキュメント（下記参照）
 - `docs/scope.md` — 今のフェーズで実装する/しない機能の線引き
   <!-- MVPスコープなど、プロジェクトごとの意思決定を書く -->
 - `docs/git-workflow.md` — ブランチ運用・Issue/PRの起こし方・リリースの手順
+- `docs/deployment.md` — デプロイ先（Firebase App Hosting）・Supabaseプロジェクトの
+  セットアップ
 - `docs/config-templates.md` — `.github/`配下の設定ひな型がなぜ今の形なのか
 - `docs/docs-sync-policy.md` — docsと実ファイルの整合性ルール（下記参照）
 
