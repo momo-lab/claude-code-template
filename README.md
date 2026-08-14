@@ -36,7 +36,8 @@ Git/PR運用やワークフローのトリガー設計（`@claude`のOWNER限定
     │   └── setup-local-supabase/      ← ローカルSupabase起動+接続情報エクスポートの複合アクション
     └── workflows/
         ├── ci.yml.template            ← 利用開始時に`.yml`へリネームして有効化する
-        └── claude-code.yml.template   ← 同上。Issue/PRで@claudeメンションした時に起動
+        ├── claude-code.yml.template   ← 同上。Issue/PRで@claudeメンションした時に起動
+        └── db-migrate.yml.template    ← 同上。develop/mainへのマージ時にmigrationを自動適用
 ```
 
 ## 注意: ワークフローが`.template`拡張子になっている理由
@@ -56,8 +57,9 @@ GitHub Actionsは、ワークフローファイルが**置かれているリポ�
 
 1. このディレクトリの中身をコピーし、`CLAUDE.md`冒頭の`{{PROJECT_NAME}}`と
    プロダクト概要（1〜3行）を書き換える。あわせて`.github/workflows/`配下の
-   `ci.yml.template` / `claude-code.yml.template`を、それぞれ`.template`を
-   取った`ci.yml` / `claude-code.yml`にリネームして有効化する
+   `ci.yml.template` / `claude-code.yml.template` / `db-migrate.yml.template`を、
+   それぞれ`.template`を取った`ci.yml` / `claude-code.yml` / `db-migrate.yml`に
+   リネームして有効化する
 2. `docs/architecture.md`のテンプレート項目（DB設計・権限モデル・スコープ）を埋める
    <!-- ここが一番重要。空のままだとClaudeが仕様を推測して実装してしまう -->
 3. GitHubリポジトリ作成、コミット。**Default branchを`develop`に変更**
@@ -81,7 +83,10 @@ GitHub Actionsは、ワークフローファイルが**置かれているリポ�
    本番用/develop検証用で別々のbackendを作成し、それぞれのlive branchを
    `main`/`develop`に設定する（backendごとに固定ドメインが発行される）
 9. Supabaseプロジェクトを作成し、`supabase init` → `supabase/migrations/`に
-   `docs/architecture.md`のテーブル定義を反映。本番用とdevelop検証用でDBを分離
+   `docs/architecture.md`のテーブル定義を反映。本番用とdevelop検証用でDBを分離。
+   `db-migrate.yml`用に`SUPABASE_DB_URL_DEVELOP` / `SUPABASE_DB_URL_PROD`を
+   リポジトリsecretsに設定する（詳細は`docs/git-workflow.md`の
+   「Supabaseプロジェクトのセットアップ」参照）
 
 ## Claude Codeへの最初の指示例
 

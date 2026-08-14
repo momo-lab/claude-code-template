@@ -1,0 +1,32 @@
+name: Deploy Supabase migrations
+
+on:
+  push:
+    branches: [develop, main]
+    paths:
+      - "supabase/migrations/**"
+
+jobs:
+  # develop/mainで接続先DBのsecretを切り替える必要があるが、ジョブ内でsecret名を
+  # 動的に組み立てることはGitHub Actions単体では綺麗に書けないため、2ジョブに分けている
+  migrate-develop:
+    if: github.ref == 'refs/heads/develop'
+    name: develop検証用プロジェクトへmigration適用
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - run: supabase db push --db-url "${{ secrets.SUPABASE_DB_URL_DEVELOP }}"
+
+  migrate-production:
+    if: github.ref == 'refs/heads/main'
+    name: 本番プロジェクトへmigration適用
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - run: supabase db push --db-url "${{ secrets.SUPABASE_DB_URL_PROD }}"

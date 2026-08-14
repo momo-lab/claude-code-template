@@ -70,6 +70,27 @@ CLAUDE.mdにプロジェクト固有の詳細（DBスキーマ全部、テスト
   所有者本人のコメントのみに限定している。共同開発者を増やす場合は
   `COLLABORATOR`等を許可リストに追加する
 
+## `.github/workflows/db-migrate.yml`
+
+**目的**: `develop`/`main`へのマージ（push）をトリガーに、`supabase/migrations`
+を実際のSupabaseプロジェクトへ自動適用する。手動での`supabase db push`忘れに
+よる「コードとDBスキーマの乖離」を防ぐ。
+
+`ci.yml`と同様、このテンプレートリポジトリ内では`db-migrate.yml.template`と
+いう名前で無効化した状態で管理し、テンプレート採用時に`.yml`へリネームして
+有効化する。
+
+設計判断:
+- develop用/本番用でDB接続先のsecretを切り替える必要があるが、ジョブ内で
+  secret名を動的に組み立てることはGitHub Actions単体では綺麗に書けないため、
+  `migrate-develop`/`migrate-production`の2ジョブに分けて、それぞれ固定の
+  secret名（`SUPABASE_DB_URL_DEVELOP`/`SUPABASE_DB_URL_PROD`）を参照している
+- `supabase/migrations/**`に変更が無いpushでは走らせないよう`paths`フィルタを
+  設定している
+- 必須レビュアーによるブロックはしていない（`docs/git-workflow.md`の
+  「ブランチ保護」と同じ理由。Privateリポジトリ+Freeプランではそもそも
+  設定できないため、マージ済みのコード＝適用してよいという前提に立っている）
+
 ## `.github/ISSUE_TEMPLATE/`
 
 **目的**: 「すべての変更はIssue起点」という運用（`docs/git-workflow.md`）を、
