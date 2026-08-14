@@ -7,7 +7,8 @@
 
 - フロントエンド/インフラ: Next.js (App Router) / Firebase App Hosting
 - DB/バックエンド: Supabase (PostgreSQL + RLS + Storage)
-- 認証: Supabase Auth
+- 認証: Supabase Auth（アカウント登録不要のCapability URL方式を採る場合は
+  `docs/architecture.md`の「認証方針」参照）
 - テスト: Vitest（unit）/ 統合テスト（ローカルSupabaseに対して実行）/ Playwright（E2E）
 <!-- 決済・通知など、プロジェクト固有のサービスがあればここに追記 -->
 
