@@ -85,6 +85,37 @@ alter default privileges in schema public
   revoke all on tables from anon, authenticated;
 ```
 
+### 選択肢: 複数アプリの同居（スキーマ+専用ロールでの分離）
+
+<!-- Supabase無料プランは「1アカウントで同時にアクティブにできる無料
+プロジェクトが2つまで」という制約がある。複数の小規模アプリを1つの
+Supabaseプロジェクトに同居させたい場合の選択肢。通常は1プロジェクト1アプリ
+（publicスキーマ）がデフォルトでよく、この制約に当たらない限り不要 -->
+
+- アプリのテーブルは`public`ではなく、アプリ専用のスキーマ（例: `myapp`）に
+  作成する。DBへは専用ロール（例: `myapp_role`）のみがアクセスでき、他の
+  スキーマ（同一プロジェクトに将来同居する別アプリのスキーマなど）へは
+  `permission denied for schema`で拒否される。境界はPostgresのGRANT/REVOKE
+  で強制され、アプリ側のコードミスに依存しない
+- アプリはServer Action内で、専用ロールを`role`claimに含む自己署名JWTを
+  発行してPostgREST（Supabase Data API）にリクエストする
+  （`grant <専用ロール> to authenticator`が必須。PostgRESTがJWTの`role`claim
+  を見て`SET ROLE`できるようにするため）
+- **ハマりどころ**: リモートのSupabaseプロジェクトでは、Data APIが専用
+  スキーマを公開する設定（Exposed schemas）が別途必要になる。
+  `supabase/config.toml`の`[api] schemas`はローカルDocker専用で`db push`
+  では反映されないため、`authenticator`ロールの`pgrst.db_schemas`を直接
+  設定するmigrationを用意し、ダッシュボードでの手動設定に頼らないようにする
+
+  ```sql
+  alter role authenticator set pgrst.db_schemas = 'myapp';
+  notify pgrst; -- 設定変更 + スキーマキャッシュの両方をリロードする
+  ```
+
+  （`notify pgrst, 'reload config'`は設定のみのリロードで、テーブル定義の
+  スキーマキャッシュはリロードされない点に注意。引数無しの`notify pgrst`で
+  両方リロードされる）
+
 ## スコープ
 
 <!--
