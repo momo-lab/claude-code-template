@@ -60,7 +60,7 @@ export default defineConfig({
 
 ブラウザを実際に操作して確認する価値がある、コアなユーザージャーニーのみを数本。
 実行コストが高いため、全PRでは回さず **develop→mainのリリースPR時のみ** 実行する
-（`docs/git-workflow.md`のリリースフロー、`.github/workflows/ci.yml`と対応）。
+（`docs/git-workflow.md`の「ブランチ保護」、`.github/workflows/ci.yml`と対応）。
 
 ## テストを書く順序（TDDのサイクル）
 
