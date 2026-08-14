@@ -53,21 +53,14 @@ GitHub Actionsは、ワークフローファイルが**置かれているリポ�
 これを避けるため、このリポジトリでは`ci.yml.template` / `claude-code.yml.template`
 という名前で無効化した状態で管理しています。プロジェクトにコピーしたあと、
 `.template`を外して`.yml`にリネームすることで初めて有効化されます
-（下記の手順1）。
+（下記の手順の最後にまとめて行う。各workflowが必要とする設定
+（`package.json`のスクリプト・secrets・Firebase/SupabaseのURL）が揃う前に
+有効化すると、無駄な失敗実行が発生するため）。
 
 ## 新しいプロジェクトを始める時の手順
 
 1. このディレクトリの中身をコピーし、`CLAUDE.md`冒頭の`{{PROJECT_NAME}}`と
-   プロダクト概要（1〜3行）を書き換える。あわせて`.github/workflows/`配下の
-   `ci.yml.template` / `claude-code.yml.template` / `db-migrate.yml.template`を、
-   それぞれ`.template`を取った`ci.yml` / `claude-code.yml` / `db-migrate.yml`に
-   リネームして有効化する。**`keep-alive.yml.template`はまだリネームしない**
-   （`.yml`にリネームした時点でcronトリガーが有効になり、プレースホルダーURLへの
-   アクセスが失敗し続けてしまう。本番/develop URLが決まる手順9で改めて案内する）。
-   `db-migrate.yml`は手順9で`SUPABASE_DB_URL_DEVELOP`/`_PROD`のsecretsを
-   設定するまでは、`supabase/migrations`を含むPRがマージされると失敗するだけの
-   状態になる（後続処理はブロックされないため実害は無いが、`supabase/migrations`
-   に触れるPRを最初にマージする前に手順9のsecrets設定を済ませておくとよい）
+   プロダクト概要（1〜3行）を書き換える
 2. `docs/architecture.md`のテンプレート項目（DB設計・権限モデル・スコープ）を埋める
    <!-- ここが一番重要。空のままだとClaudeが仕様を推測して実装してしまう -->
 3. GitHubリポジトリ作成、コミット。**Default branchを`develop`に変更**
@@ -78,9 +71,9 @@ GitHub Actionsは、ワークフローファイルが**置かれているリポ�
    必須レビュー等の保護ルールはGitHub Pro以上が必要**なため、Freeプランの場合は
    GitHub側で強制せず「直接pushしない」を規約として守る運用にする（詳細は
    `docs/git-workflow.md`の「ブランチ保護」参照）。Pro以上で実際に設定する場合も、
-   **最初のうちは必須チェックを設定しない**こと。`package.json`のスクリプトや
-   `src/types/database.ts`が存在しないうちはCIが必ず失敗するため、最初の
-   スキャフォールドPRを1回通してから必須チェックを有効にする
+   **最初のうちは必須チェックを設定しない**こと。ワークフローをまだ有効化して
+   おらずCIが一度も走っていないため、必須チェックの選択肢にも出てこない。
+   最初のスキャフォールドPRでCIが1回走ってから必須チェックを有効にする
 6. `package.json`に`lint` / `typecheck` / `build` / `test:unit` /
    `test:integration` / `test:e2e` のスクリプトを定義
    （Next.jsプロジェクト未初期化なら、Claude Codeに「CLAUDE.mdとdocs/を読んで
@@ -89,14 +82,17 @@ GitHub Actionsは、ワークフローファイルが**置かれているリポ�
    `ANTHROPIC_API_KEY` を登録
 8. Firebaseプロジェクトを作成し、App Hostingでリポジトリと連携する。
    本番用/develop検証用で別々のbackendを作成し、それぞれのlive branchを
-   `main`/`develop`に設定する（backendごとに固定ドメインが発行される）。
-   本番/develop URLが決まったら、`.github/workflows/keep-alive.yml.template`
-   内のURLを書き換えたうえで`keep-alive.yml`にリネームして有効化する
+   `main`/`develop`に設定する（backendごとに固定ドメインが発行される）
 9. Supabaseプロジェクトを作成し、`supabase init` → `supabase/migrations/`に
    `docs/architecture.md`のテーブル定義を反映。本番用とdevelop検証用でDBを分離。
    `db-migrate.yml`用に`SUPABASE_DB_URL_DEVELOP` / `SUPABASE_DB_URL_PROD`を
    リポジトリsecretsに設定する（詳細は`docs/deployment.md`の
    「Supabaseプロジェクトのセットアップ」参照）
+10. ここまでで各workflowが必要とする設定が揃ったので、`.github/workflows/`配下の
+    `ci.yml.template` / `claude-code.yml.template` / `db-migrate.yml.template`を、
+    それぞれ`.template`を取った`ci.yml` / `claude-code.yml` / `db-migrate.yml`に
+    リネームして有効化する。`keep-alive.yml.template`は中のURLを手順8で決めた
+    本番/develop URLに書き換えたうえで`keep-alive.yml`にリネームする
 
 ## Claude Codeへの最初の指示例
 
