@@ -1,6 +1,6 @@
 # claude-code-template
 
-Next.js (App Router) + Vercel + Supabase構成で、Claude Codeと一緒に開発する
+Next.js (App Router) + Firebase App Hosting + Supabase構成で、Claude Codeと一緒に開発する
 プロジェクト用の共通テンプレートです。新しいプロジェクトを始めるたびに、
 このリポジトリの中身をプロジェクトルートにコピーして使います。
 
@@ -72,8 +72,9 @@ GitHub Actionsは、ワークフローファイルが**置かれているリポ�
    雛形をセットアップして」と頼めばスクリプトも含めて提案してくれる）
 7. `claude-code.yml`を使うので、リポジトリの Settings > Secrets に
    `ANTHROPIC_API_KEY` を登録
-8. Vercelにリポジトリを接続。Production Branchを`main`に設定し、`develop`用の
-   固定URL（Hobby: ブランチ固定ドメイン / Pro: Custom Environment）を用意する
+8. Firebaseプロジェクトを作成し、App Hostingでリポジトリと連携する。
+   本番用/develop検証用で別々のbackendを作成し、それぞれのlive branchを
+   `main`/`develop`に設定する（backendごとに固定ドメインが発行される）
 9. Supabaseプロジェクトを作成し、`supabase init` → `supabase/migrations/`に
    `docs/architecture.md`のテーブル定義を反映。本番用とdevelop検証用でDBを分離
 

@@ -7,9 +7,10 @@
 
 ## ブランチ構成
 
-- `main`: 本番。Vercel Production Branch。直接pushしない。PRのみで更新する
-- `develop`: **リポジトリのデフォルトブランチ**。開発/検証用。Vercelの固定URL
-  （開発系環境）に自動デプロイされる
+- `main`: 本番。Firebase App Hostingの本番用backend（live branch = `main`）。
+  直接pushしない。PRのみで更新する
+- `develop`: **リポジトリのデフォルトブランチ**。開発/検証用。Firebase App Hosting
+  のdevelop用backend（live branch = `develop`）に自動デプロイされる
 - `feature/{issue番号}-slug` / `fix/{issue番号}-slug`: 通常の作業ブランチ。
   `develop`から切り、`develop`へPRを出す
 - `hotfix/{issue番号}-slug`: 本番で今すぐ直したい緊急修正のみ、例外的に`main`から切る
@@ -24,10 +25,11 @@ Claude Code GitHub Actionが開くPRも、何も指定しなければデフォ�
 2. Issue画面から「Create a branch」で`develop`ベースの作業ブランチを作成
 3. 実装 → `develop`向けにPRを作成。本文に`Closes #<issue番号>`を必ず書く
    （マージ時にIssueが自動クローズされる）
-4. PRで`.github/workflows/ci.yml`が走る。VercelがPreviewデプロイし、PRにURLが
-   コメントされる（PR単体の動作確認用）
-5. `develop`にマージ → Vercelの開発系環境（固定URL）に反映される。
-   **ここで実際に触って手動検証する**
+4. PRで`.github/workflows/ci.yml`が走る。Firebase App HostingのGitHub連携で
+   PRごとのプレビュー用ロールアウトが自動生成され、PRにURLがコメントされる
+   （PR単体の動作確認用。Firebase Console側でPRプレビューの発行を有効にしておく）
+5. `develop`にマージ → develop用backendのlive branchが更新され、develop固定URLに
+   反映される。**ここで実際に触って手動検証する**
 6. 検証OKなものがある程度溜まったら、`develop → main`のリリースPRを作成してマージ
    → 本番デプロイ
 
@@ -36,7 +38,7 @@ Claude Code GitHub Actionが開くPRも、何も指定しなければデフォ�
 1. Issueに `@claude ◯◯して` とコメントする（GitHub Web/モバイルアプリどちらでも可）
 2. `.github/workflows/claude-code.yml`が起動し、デフォルトブランチ(`develop`)を
    起点にブランチを作成してPRを自動で開く
-3. PRのVercel Preview、またはマージ後のdevelop固定URLで人間が検証する
+3. PRのプレビューロールアウト、またはマージ後のdevelop固定URLで人間が検証する
 4. 問題なければ通常フロー同様、develop→mainのリリースPRでまとめて本番反映する
 
 Claudeが開いたPRであっても、mainへの直接マージは行わない。必ずdevelopを経由させる。
@@ -71,13 +73,16 @@ Claudeが開いたPRであっても、mainへの直接マージは行わない�
 `.github/workflows/ci.yml`は`develop`向けPRと`main`向けPR（リリースPR）の両方で
 発火する。E2Eだけは重いので`main`向けPR（リリースPR）の時だけ実行される。
 
-## Vercel設定
+## Firebase App Hostingセットアップ
 
-- Production Branch = `main`
-- `develop`ブランチに固定ドメイン（例: `dev.example.com`）を割り当てる
-  - Hobbyプラン: Preview環境の中で`develop`ブランチに固定ドメインを割り当てる
-    方式で代替する
-  - Proプラン以上: Custom Environmentとして`staging`を作成し、`develop`への
-    branch trackingを設定すると、専用の環境変数・専用ドメインを綺麗に分離できる
+- Firebaseプロジェクト内にApp Hostingのbackendを**本番用/develop検証用の2つ**
+  作成し、それぞれのlive branchを`main`/`develop`に設定する（backendごとに
+  `*.web.app`等の固定ドメインが発行される。独自ドメインを使う場合もbackendごとに
+  個別に割り当てる）
+- 環境変数・シークレットは`apphosting.yaml`（backendごとに
+  `apphosting.<branch>.yaml`で分離可能）とSecret Manager経由で管理する。
+  Vercelのようなダッシュボード上の平文環境変数ではなく、
+  `firebase apphosting:secrets:set`でSecret Managerに登録し、`apphosting.yaml`の
+  `env`欄で参照する
 - 本番とdevelop検証環境ではSupabaseプロジェクト（または最低限DB/スキーマ）を
   分離し、手動検証で本番データを汚さないようにする

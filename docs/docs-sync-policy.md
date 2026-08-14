@@ -51,7 +51,7 @@
 |---|---|
 | `supabase/migrations/`（DBスキーマ） | `docs/architecture.md`（該当テーブルの定義） |
 | テストの粒度・実行方法を変えた（例: E2Eの対象追加） | `docs/testing-strategy.md` |
-| ブランチ保護設定・Vercel設定・`ci.yml`のトリガー | `docs/git-workflow.md` |
+| ブランチ保護設定・Firebase App Hostingセットアップ・`ci.yml`のトリガー | `docs/git-workflow.md` |
 | 実装する/しない機能の方針を変えた | `docs/scope.md` |
 
 **緩め（気づいたタイミングで直せばよい。リリースをブロックしない）**

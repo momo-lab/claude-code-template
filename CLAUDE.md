@@ -5,7 +5,7 @@
 
 ## 技術スタック
 
-- フロントエンド/インフラ: Next.js (App Router) / Vercel
+- フロントエンド/インフラ: Next.js (App Router) / Firebase App Hosting
 - DB/バックエンド: Supabase (PostgreSQL + RLS + Storage)
 - 認証: Supabase Auth
 - テスト: Vitest（unit）/ 統合テスト（ローカルSupabaseに対して実行）/ Playwright（E2E）
