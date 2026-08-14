@@ -65,10 +65,24 @@ Claudeが開いたPRであっても、mainへの直接マージは行わない�
 
 ## ブランチ保護（GitHubリポジトリ設定・手動）
 
-- `main`: PR必須 / CIのstatic-checksとintegration-testsを必須チェックに設定 /
-  直接push禁止
-- `develop`: 同上（個人開発でも統一した方がミスが減る）
-- リポジトリのDefault branchは`develop`に設定する
+**注意**: 必須レビュー・必須ステータスチェックなどのブランチ保護ルールは、
+Privateリポジトリでは**GitHub Pro以上のプランが必要**な機能。個人開発で
+Privateリポジトリ+Freeプランを使っている場合、GitHub側でこれらを強制することは
+できない（設定しようとすると "Please ensure the billing plan supports the
+required reviewers protection rule." のようなエラーで拒否される）。
+
+- **Free/Privateの場合（デフォルト）**: GitHub側の強制設定はせず、以下を
+  **規約として守る**運用にする
+  - `main`/`develop`へは直接pushしない。必ずPR経由で更新する
+  - CIが通っていないPRはマージしない（下記「PRの書き方」参照）
+  - リポジトリのDefault branchは`develop`に設定する
+- **Pro以上のプランを使っている場合**: 上記に加えて実際にGitHub側でも強制できる
+  - `main`: PR必須 / CIのstatic-checksとintegration-testsを必須チェックに設定 /
+    直接push禁止
+  - `develop`: 同上（個人開発でも統一した方がミスが減る）
+  - **ただし最初のうちは必須チェックを設定しない**こと。`package.json`の
+    スクリプトや`src/types/database.ts`が存在しないうちはCIが必ず失敗するため、
+    最初のスキャフォールドPRを1回通してから必須チェックを有効にする
 
 `.github/workflows/ci.yml`は`develop`向けPRと`main`向けPR（リリースPR）の両方で
 発火する。E2Eだけは重いので`main`向けPR（リリースPR）の時だけ実行される。

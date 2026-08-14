@@ -62,8 +62,11 @@ GitHub Actionsは、ワークフローファイルが**置かれているリポ�
    （Settings > General > Default branch）
 4. Settings > General で「Automatically delete head branches」を有効化
    （マージ後の作業ブランチを自動削除し、ブランチが溜まるのを防ぐ）
-5. `main` / `develop` にブランチ保護ルールを設定（PR必須・CI必須・直接push禁止）。
-   **ただし最初のうちは必須チェックを設定しない**こと。`package.json`のスクリプトや
+5. `main` / `develop` にブランチ保護ルールを設定する。**Privateリポジトリでは
+   必須レビュー等の保護ルールはGitHub Pro以上が必要**なため、Freeプランの場合は
+   GitHub側で強制せず「直接pushしない」を規約として守る運用にする（詳細は
+   `docs/git-workflow.md`の「ブランチ保護」参照）。Pro以上で実際に設定する場合も、
+   **最初のうちは必須チェックを設定しない**こと。`package.json`のスクリプトや
    `src/types/database.ts`が存在しないうちはCIが必ず失敗するため、最初の
    スキャフォールドPRを1回通してから必須チェックを有効にする
 6. `package.json`に`lint` / `typecheck` / `build` / `test:unit` /
