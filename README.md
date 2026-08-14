@@ -63,7 +63,11 @@ GitHub Actionsは、ワークフローファイルが**置かれているリポ�
    それぞれ`.template`を取った`ci.yml` / `claude-code.yml` / `db-migrate.yml`に
    リネームして有効化する。**`keep-alive.yml.template`はまだリネームしない**
    （`.yml`にリネームした時点でcronトリガーが有効になり、プレースホルダーURLへの
-   アクセスが失敗し続けてしまう。本番/develop URLが決まる手順9で改めて案内する）
+   アクセスが失敗し続けてしまう。本番/develop URLが決まる手順9で改めて案内する）。
+   `db-migrate.yml`は手順9で`SUPABASE_DB_URL_DEVELOP`/`_PROD`のsecretsを
+   設定するまでは、`supabase/migrations`を含むPRがマージされると失敗するだけの
+   状態になる（後続処理はブロックされないため実害は無いが、`supabase/migrations`
+   に触れるPRを最初にマージする前に手順9のsecrets設定を済ませておくとよい）
 2. `docs/architecture.md`のテンプレート項目（DB設計・権限モデル・スコープ）を埋める
    <!-- ここが一番重要。空のままだとClaudeが仕様を推測して実装してしまう -->
 3. GitHubリポジトリ作成、コミット。**Default branchを`develop`に変更**
