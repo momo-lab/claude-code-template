@@ -43,7 +43,7 @@ GitHub Actionsは、ワークフローファイルが**置かれているリポ�
 `ci.yml` / `claude-code.yml`をそのままの拡張子でこのテンプレートリポジトリに
 置いておくと、テンプレート自身を更新するPRやコメントでも動いてしまいます。
 特に`ci.yml`は`package.json`やNext.js/Supabaseの実体を前提にしているため、
-このリポジトリ自体を更新するPRでは`npm ci`などが必ず失敗します。
+このリポジトリ自体を更新するPRでは`pnpm install`などが必ず失敗します。
 
 これを避けるため、このリポジトリでは`ci.yml.template` / `claude-code.yml.template`
 という名前で無効化した状態で管理しています。プロジェクトにコピーしたあと、

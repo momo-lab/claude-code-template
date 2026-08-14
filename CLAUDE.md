@@ -14,15 +14,15 @@
 ## コマンド
 
 ```bash
-npm run dev                # 開発サーバー
-npm run lint                # Lint
-npm run typecheck           # tsc --noEmit
-npm run build                # 本番ビルド確認
+pnpm dev                # 開発サーバー
+pnpm lint                # Lint
+pnpm typecheck           # tsc --noEmit
+pnpm build                # 本番ビルド確認
 supabase start                # ローカルSupabase起動（Docker）
 supabase db reset             # ローカルDBをmigrationから再構築 + seed投入
-npm run test:unit              # ユニットテスト
-npm run test:integration       # 統合テスト（ローカルSupabase必須）
-npm run test:e2e                # Playwright E2E
+pnpm test:unit              # ユニットテスト
+pnpm test:integration       # 統合テスト（ローカルSupabase必須）
+pnpm test:e2e                # Playwright E2E
 supabase gen types typescript --local > src/types/database.ts  # DB型生成
 ```
 
