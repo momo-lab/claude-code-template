@@ -23,13 +23,15 @@ Claude Code GitHub Actionが開くPRも、何も指定しなければデフォ�
 
 1. Issue作成（`.github/ISSUE_TEMPLATE/`のテンプレートを使う）
 2. Issue画面から「Create a branch」で`develop`ベースの作業ブランチを作成
-3. 実装 → `develop`向けにPRを作成。本文に`Closes #<issue番号>`を必ず書く
-   （マージ時にIssueが自動クローズされる）
+3. 実装 → `develop`向けにPRを作成。本文に`Refs #<issue番号>`のようにIssue番号を
+   明記する（`Closes`/`Fixes`等のクローズキーワードは使わない。マージ時点では
+   まだdevelopでの手動検証が済んでいないため、Issueは自動クローズさせない）
 4. PRで`.github/workflows/ci.yml`が走る。Firebase App HostingのGitHub連携で
    PRごとのプレビュー用ロールアウトが自動生成され、PRにURLがコメントされる
    （PR単体の動作確認用。Firebase Console側でPRプレビューの発行を有効にしておく）
 5. `develop`にマージ → develop用backendのlive branchが更新され、develop固定URLに
-   反映される。**ここで実際に触って手動検証する**
+   反映される。**ここで実際に触って手動検証し、問題なければ対応するIssueを
+   手動でクローズする**
 6. 検証OKなものがある程度溜まったら、`develop → main`のリリースPRを作成してマージ
    → 本番デプロイ
 
@@ -38,7 +40,10 @@ Claude Code GitHub Actionが開くPRも、何も指定しなければデフォ�
 1. Issueに `@claude ◯◯して` とコメントする（GitHub Web/モバイルアプリどちらでも可）
 2. `.github/workflows/claude-code.yml`が起動し、デフォルトブランチ(`develop`)を
    起点にブランチを作成してPRを自動で開く
-3. PRのプレビューロールアウト、またはマージ後のdevelop固定URLで人間が検証する
+3. PRのプレビューロールアウト、またはマージ後のdevelop固定URLで人間が検証する。
+   問題なければ対応するIssueを手動でクローズする（Claude Codeが開くPRの本文も
+   クローズキーワードを使わない書き方になるよう、Issueコメントで依頼する際に
+   伝える。「PRの書き方」参照）
 4. 問題なければ通常フロー同様、develop→mainのリリースPRでまとめて本番反映する
 
 Claudeが開いたPRであっても、mainへの直接マージは行わない。必ずdevelopを経由させる。
@@ -54,11 +59,16 @@ Claudeが開いたPRであっても、mainへの直接マージは行わない�
    `git checkout -b sync/main-to-develop main && git push` してから
    `develop`向けPRを作る）
 
+hotfixは`develop`での検証待ちという中間状態を挟まず、マージ＝即本番反映
+であるため、通常フローと異なり`Closes #<issue番号>`を使ってよい（マージと
+同時にIssueをクローズして問題ない）。
+
 ## PRの書き方
 
 - タイトルは `feat: ...` / `fix: ...` / `chore: ...` 程度のprefixで揃える
   （厳密なConventional Commits運用はしない。可読性のためだけ）
-- 本文には最低限 `Closes #<issue番号>` と、動作確認方法（develop環境のURLで
+- 本文には最低限 `Refs #<issue番号>`（`Closes`/`Fixes`等のクローズキーワードは
+  使わない。理由は「通常フロー」参照）と、動作確認方法（develop環境のURLで
   何を確認したか）を書く
 - レビュー必須のルールは設けない（個人開発のため）。ただしCIが通っていない
   PRはマージしない
