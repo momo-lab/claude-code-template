@@ -85,6 +85,12 @@ CLAUDE.mdにプロジェクト固有の詳細（DBスキーマ全部、テスト
   secret名を動的に組み立てることはGitHub Actions単体では綺麗に書けないため、
   `migrate-develop`/`migrate-production`の2ジョブに分けて、それぞれ固定の
   secret名（`SUPABASE_DB_URL_DEVELOP`/`SUPABASE_DB_URL_PROD`）を参照している
+- `supabase link`は使わず`supabase db push --db-url <接続文字列>`で直接pushする。
+  アクセストークンやプロジェクトrefをCI側で管理する必要が無くなり、必要な
+  秘密情報は接続文字列（`SUPABASE_DB_URL_DEVELOP`/`SUPABASE_DB_URL_PROD`）のみで済む
+- 接続文字列はSupabaseダッシュボードの**Session pooler**（Connect → Session
+  pooler）のものを使う。直接接続（`db.<ref>.supabase.co`）はIPv6のみで、
+  GitHub Actionsのホステッドランナーからは到達できないため
 - `supabase/migrations/**`に変更が無いpushでは走らせないよう`paths`フィルタを
   設定している
 - `concurrency`で同一ブランチへの連続マージ時に`supabase db push`が並行実行
