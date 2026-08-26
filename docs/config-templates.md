@@ -48,6 +48,19 @@ CLAUDE.mdにプロジェクト固有の詳細（DBスキーマ全部、テスト
   動的発行されるため、固定値の決め打ちはCLIの更新でいつか壊れる
 - ブランチ運用そのもの（develop/mainの役割）は`docs/git-workflow.md`が正。
   このファイルはその運用を「機械的に強制する手段」という位置づけ
+- `integration-tests`ジョブの主なボトルネックは`supabase start`のコンテナ起動
+  時間。`supabase init`が生成する`supabase/config.toml`は`storage`/`realtime`/
+  `edge_runtime`/`analytics`/`local_smtp`がデフォルトで全部`enabled = true`に
+  なっているが、プロジェクトで実際に使っていないサービスは`enabled = false`に
+  して起動するコンテナ数を減らす（実測: `supabase start`が138秒→89秒に短縮）。
+  `[auth]`は`ANON_KEY`/`JWT_SECRET`の発行に必要なため、認証方式によらず
+  `enabled = true`のまま維持する
+- Dockerイメージ（postgres/kong/gotrue/postgrest等）を`actions/cache`で
+  キャッシュしてpull時間を削る案は試したが**逆効果だった**（実測:
+  `SUPABASE_INTERNAL_IMAGE_REGISTRY=ghcr.io`設定下でのpullが62秒に対し、
+  キャッシュ復元+`docker load`で93秒かかり、差し引き23秒遅くなった。
+  GitHub Actions runnerと同一インフラのghcr.ioからのpullが既に十分高速なため）。
+  再検討不要
 
 ## `.github/workflows/claude-code.yml`
 
